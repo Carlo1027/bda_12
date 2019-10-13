@@ -78,12 +78,33 @@ df <- data.frame(x=seq(1,6),
                  y=rep(7,6),
                  z=c(10,11))
 View(df)
-head(df, n=4)
+head(df, n=4) # 4 primeros registros
 
 
+df$x # df[[1]]
+df[c("x","z")] # df[c(1,3)]
+w <- df[c("y","z")] # df[, c("y","z")]
+class(w)
 
+df[, c("y","z")]
+df
+cbind(df, w=rep(1,6)) # agregar columna
+rbind(df, c(6,7,4)) # insertar
 
+# SELECT a,b, as B FROM tabla WHERE condicion
+head(df)
+df_1 <- df[, c("x","z")]
+names(df_1)[2]=c("zz")
+df_1[!(df_1$x > 5 & df_1$zz > 10),]
+subset(df_1, !(df_1$x > 5 & df_1$zz > 10))
 
+############################################
+# GRAFICOS
+############################################
+plot(df$x)
+plot(df$x, df$z)
+hist(df$x)
+pie(df$x)
 
 
 
