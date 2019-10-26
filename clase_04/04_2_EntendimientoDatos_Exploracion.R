@@ -33,9 +33,9 @@ dev.off()
 #Exited
 var1 <- c("HasCrCard","IsActiveMember","Exited")
 for (v in var1) {
-  jpeg(trimws(paste('Clase_04/',v,'.jpg')))
-  cuadro <- table(df.desa$v)
-  barplot(cuadro, xlim = names(cuadro))
+  jpeg(paste('Clase_04/',v,'.jpg'))
+  cuadro <- table(df.desa[,v])
+  barplot(cuadro)
   dev.off()
 }
 
@@ -74,7 +74,10 @@ for (v in varN) {
 temp <- data.frame(idx,varN,min)
 temp
 
-
+#graficos
+summary(df.desa)
+hist(df.desa$Age)
+boxplot(df.desa$Age)
 
 
 
