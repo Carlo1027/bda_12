@@ -69,6 +69,7 @@ hist(df.desa.F$EstimatedSalary)
 # MUESTREO BALANCEADO
 #========================
 library(caTools)
+set.seed(123)
 split = sample.split(df.desa.F$Exited, SplitRatio = 0.6)
 df.desa.F.train <- subset(df.desa.F, split == TRUE)
 df.desa.F.test <- subset(df.desa.F, split == FALSE)

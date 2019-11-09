@@ -31,7 +31,7 @@ df.desa.F$Age <- ifelse( df.desa.F$Age > qa, qa, df.desa.F$Age)
 
 #Tenure
 #Balance
-df.desa.F$Balance<- log2(df.desa.F$Balance)
+#df.desa.F$Balance<- log2(df.desa.F$Balance)
 #hist(df.desa.F$Balance)
 
 #NumOfProducts
