@@ -44,6 +44,20 @@ saveRDS(modelo_lm3, "clase_07/Regresion_Profit/modelo_lm.rds")
 #======================================
 # ARBOL DE REGRESION
 #======================================
+load(file = "clase_07/Regresion_Profit/df_train.Rdata")
+load(file = "clase_07/Regresion_Profit/df_test.Rdata")
+library(rpart)
+library(rpart.plot)
+modelo_dt_1 <- rpart(formula = Profit ~ ., data = df.train)
+summary(modelo_dt_1)
+rpart.plot(modelo_dt_1)
+saveRDS(modelo_dt_1, file = "clase_07/Regresion_Profit/modelo_dt_1.rds")
+
+modelo_dt_2 <- rpart(formula = Profit ~ ., data = df.train, control = rpart.control(minsplit = 2))
+summary(modelo_dt_2)
+rpart.plot(modelo_dt_2)
+saveRDS(modelo_dt_2, file = "clase_07/Regresion_Profit/modelo_dt_2.rds")
+
 
 
 
