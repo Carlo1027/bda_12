@@ -1,0 +1,26 @@
+<annotation>
+	<folder>IMAGENES</folder>
+	<filename>cat.11.jpg</filename>
+	<path>D:\bda_12\tratamiento_datos_no_estructurados\MODELOS\IMAGENES\cat.11.jpg</path>
+	<source>
+		<database>Unknown</database>
+	</source>
+	<size>
+		<width>431</width>
+		<height>410</height>
+		<depth>3</depth>
+	</size>
+	<segmented>0</segmented>
+	<object>
+		<name>cat</name>
+		<pose>Unspecified</pose>
+		<truncated>0</truncated>
+		<difficult>0</difficult>
+		<bndbox>
+			<xmin>163</xmin>
+			<ymin>7</ymin>
+			<xmax>370</xmax>
+			<ymax>389</ymax>
+		</bndbox>
+	</object>
+</annotation>
