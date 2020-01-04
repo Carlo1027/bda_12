@@ -1,0 +1,54 @@
+Para subir un archivo: clic en la tuerca y Upload File
+primer_archivo.txt
+
+Creación de carpetas
+hdfs dfs -mkdir /landing_carloc
+hdfs dfs -mkdir /landing_carloc/ventas
+hdfs dfs -mkdir /transformation_carloc
+hdfs dfs -mkdir /visual_carloc
+hdfs dfs -mkdir /security_carloc
+
+Listar las carpetas
+hdfs dfs -ls /
+
+Cargar el archivo
+hdfs dfs -copyFromLocal primer_archivo.txt /landing_carloc/ventas
+
+Validar
+hdfs dfs -ls /landing_carloc/ventas
+
+Crear toda la ruta (carpetas y subcarpetas)
+hdfs dfs -mkdir -p /carloc/uni/sesion_uno/directory
+
+Cargar el archivo nasdaq.csv a la carpeta HDFS
+/carloc/stock/
+
+Obtener el archivo desde HDFS a linux
+hdfs dfs -get /landing_carloc/ventas/primer_archivo.txt /home/carlocastrogalindo/ventas_linux/
+
+Directorio raiz
+pwd
+
+Ver el archivo
+hdfs dfs -cat /carloc/stock/nasdaq.csv
+
+CKSUM
+EN LINUX
+cksum nasdaq.csv | awk '{ print $1 }'
+EN HADOOP
+hadoop fs -cat /carloc/stock/nasdaq.csv | cksum | awk '{ print $1 }'
+
+ELIMINAR
+Archivo
+hdfs dfs -rm -f /landing_carloc/ventas/primer_archivo.txt
+
+Carpeta
+hdfs dfs -rm -r /landing_carloc/ventas/
+
+Peso dentro de un directorio
+hdfs dfs -du -s -h "/carloc/stock/*"
+
+Permisos
+hdfs dfs -chmod 750 /carloc
+
+
