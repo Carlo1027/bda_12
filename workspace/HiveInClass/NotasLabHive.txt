@@ -77,22 +77,21 @@ CREATE EXTERNAL TABLE IF NOT EXISTS carloc.tienda(
 2.1 CREAR TABLA TRANSACCION
 
 CREATE EXTERNAL TABLE IF NOT EXISTS carloc.transaccion(
- IdCliente string,
- Monto string,
- FormatoTransaccion string,
- TipoTransaccion string,
- IdTienda int,
- Fecha string,
- IdProducto string,
- Unidades int
- )
- COMMENT 'Tabla transaccion'
- ROW FORMAT DELIMITED
- FIELDS TERMINATED BY ','
- COLLECTION ITEMS TERMINATED BY '\n'
- MAP KEYS TERMINATED BY ':'
- LOCATION '/carlocastro/transaccion'
- tblproperties("skip.header.line.count" = "1");
+idcliente string COMMENT 'IdCliente',
+Monto string ,
+FormatoTransaccion string,
+TipoTransaccion string ,
+IdTienda string ,
+Fecha string ,
+IdProducto string ,
+Unidades string
+)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY ','
+LINES TERMINATED BY '\n'
+STORED AS TEXTFILE
+LOCATION '/carlocastro/transaccion'
+tblproperties("skip.header.line.count" = "1");
 
 3. Para validar la creacion correcta ejecutamos las siguientes queries
 
@@ -116,7 +115,7 @@ LOCATION '/carlocastro/empresa/tabla_cliente_particion_estatica';
 
 2. Insertamos la data
 //Agregamos data
-insert into carloc.tabla_cliente_particion_estatica(mensual ='201812')
+insert into carloc.tabla_cliente_particion_estatica partition (mensual='201612')
 select 
   from_unixtime (unix_timestamp(Concat(substring(fecha,1,4),SUBSTRING(Fecha,5,2), SUBSTRING(Fecha,7,2)), 'yyyyMMdd'), 'yyyy-MM-dd') as Fecha,
   case
