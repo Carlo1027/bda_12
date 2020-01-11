@@ -1,0 +1,19 @@
+use antonioc;
+CREATE EXTERNAL TABLE IF NOT EXISTS antonioc.cliente_buckets (
+ IdTienda string,
+ Sucursal string,
+ Distrito string,
+ Tipo string,
+ DistritoTipo struct<Distrito:STRING,Tipo:string>
+ )
+ CLUSTERED BY (Sucursal) INTO 2 BUCKETS 
+ ROW FORMAT DELIMITED
+ FIELDS TERMINATED BY '|'
+ COLLECTION ITEMS TERMINATED BY ','
+ MAP KEYS TERMINATED BY ':'
+LOCATION '/antonioc/empresa/tabla_bucketing';
+
+/*Engines: Tez, Spark y MapReduce*/
+set map.reduce.tasks = 2;
+set hive.enforce.bucketing = true;
+INSERT OVERWRITE TABLE antonioc.cliente_buckets SELECT * FROM antonioc.tienda;

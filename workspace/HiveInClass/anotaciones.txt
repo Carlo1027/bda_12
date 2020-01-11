@@ -1,0 +1,2 @@
+Avro (almacenamiento)
+Parquet (explotación)

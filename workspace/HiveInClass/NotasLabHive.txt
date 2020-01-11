@@ -1,0 +1,205 @@
+#Lab Hive
+1. Ingresar a la consola
+1.1 Comando hive
+    * escribir hive en alguno de los nodos del cluster
+    * Salir CTRL+D
+1.2 Usando Beeline
+    * ip local del Master
+    * beeline -u jdbc:hive2://10.128.0.5:10000/ /*IP DEL MASTER*/
+2. Listar las BD en Hive (previamente tienes que estar conectado por Beeline)
+   show databases;
+3. Crear una base de datos
+   create database carloc;
+
+###########################################################
+Crear Tabla Simple
+###########################################################
+1. Ejecutar el Script por Beeline
+use carloc;/*indicar la base de datos a usar*/
+
+CREATE EXTERNAL TABLE IF NOT EXISTS carloc.cliente(
+idcliente string COMMENT 'IdCliente',
+dni string COMMENT 'DNI',
+apellidopaterno string COMMENT 'ApellidoPaterno',
+apellidomaterno string COMMENT 'ApellidoMaterno',
+nombres string COMMENT 'Nombres',
+genero string COMMENT 'Genero',
+direccion string COMMENT 'Direccion',
+distrito string COMMENT 'Distrito',
+correo string COMMENT 'Correo',
+telefono1 int COMMENT 'Telefono1',
+telefono2 int COMMENT 'Telefono2'
+)
+COMMENT 'Tabla cliente'
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY ','
+LINES TERMINATED BY '\n'
+STORED AS TEXTFILE
+LOCATION '/carlocastro/'/*Ruta en HDFS donde buscará la data*/ 
+tblproperties("skip.header.line.count" = "1");
+
+2. Validar la cración de la tabla
+show tables in carloc;
+
+3. Validar la ruta y contenido en HDFS
+select * from carloc.cliente;
+
+4. Cargamos a HDFS especificamente a la ruta donde indicaba la tabla un archivo CSV con la estructura descrita
+hdfs dfs -ls /carlocastro
+hdfs dfs -put clienteslite.csv /carlocastro
+
+5. Al volver a ejecutar el Select * from se observó que ya estaban disponible los datos
+
+
+###########################################################
+Crear Tabla con estructuras complejas
+###########################################################
+
+1. Llevar el archivo a la ruta en HDFS donde apuntará la tabla de Hive
+
+2. Ejecutar por Beeline el script de creación de la tabla, esta contiene un campo de tipo Struct
+use antonioc;
+CREATE EXTERNAL TABLE IF NOT EXISTS carloc.tienda(
+ IdTienda string,
+ Sucursal string,
+ Distrito string,
+ Tipo string,
+ DistritoTipo struct<Distrito:STRING,Tipo:string>
+ )
+ COMMENT 'Tabla tienda'
+ ROW FORMAT DELIMITED
+ FIELDS TERMINATED BY '|'
+ COLLECTION ITEMS TERMINATED BY ','
+ MAP KEYS TERMINATED BY ':'
+ LOCATION '/carlocastro/empresa/tienda'
+ tblproperties("skip.header.line.count" = "1");
+
+2.1 CREAR TABLA TRANSACCION
+
+CREATE EXTERNAL TABLE IF NOT EXISTS carloc.transaccion(
+ IdCliente string,
+ Monto string,
+ FormatoTransaccion string,
+ TipoTransaccion string,
+ IdTienda int,
+ Fecha string,
+ IdProducto string,
+ Unidades int
+ )
+ COMMENT 'Tabla transaccion'
+ ROW FORMAT DELIMITED
+ FIELDS TERMINATED BY ','
+ COLLECTION ITEMS TERMINATED BY '\n'
+ MAP KEYS TERMINATED BY ':'
+ LOCATION '/carlocastro/transaccion'
+ tblproperties("skip.header.line.count" = "1");
+
+3. Para validar la creacion correcta ejecutamos las siguientes queries
+
+select distritotipo.distrito, distritotipo.tipo from carloc.tienda;
+select distritotipo from antonioc.tienda;
+
+###########################################################
+Crear Tabla con partición estática
+###########################################################
+1. Creamos la tabla
+CREATE EXTERNAL TABLE carloc.tabla_cliente_particion_estatica
+(
+    Fecha String,
+    TipoCliente String,
+    TipoTransaccion String,
+    Monto String
+)
+PARTITIONED BY (mensual STRING)
+STORED AS PARQUET
+LOCATION '/carlocastro/empresa/tabla_cliente_particion_estatica';
+
+2. Insertamos la data
+//Agregamos data
+insert into carloc.tabla_cliente_particion_estatica(mensual ='201812')
+select 
+  from_unixtime (unix_timestamp(Concat(substring(fecha,1,4),SUBSTRING(Fecha,5,2), SUBSTRING(Fecha,7,2)), 'yyyyMMdd'), 'yyyy-MM-dd') as Fecha,
+  case
+    when Monto < 50 then 'Standard'
+    when Monto between 51 and 100 then 'Medium'
+    else 'Top'
+  end as TipoCliente,
+  case
+    when TipoTransaccion = 'BOL' then 'Boleta'    
+    else 'Factura'
+  end as TipoTransaccion,
+  cast(Monto as decimal(19, 2)) as Monto
+from carloc.transaccion;
+
+###########################################################
+Crear Tabla con bucketing
+###########################################################
+Ideal para tablas que tengan una columna con una cantidad casi estática de elementos distintos y relativamente bien balanceados. Por ejemplo las regiones de Perú y las tiendas que se tiene en cada una.
+
+use antonioc;
+CREATE EXTERNAL TABLE IF NOT EXISTS antonioc.cliente_buckets (
+ IdTienda string,
+ Sucursal string,
+ Distrito string,
+ Tipo string,
+ DistritoTipo struct<Distrito:STRING,Tipo:string>
+ )
+ CLUSTERED BY (Sucursal) INTO 2 BUCKETS 
+ ROW FORMAT DELIMITED
+ FIELDS TERMINATED BY '|'
+ COLLECTION ITEMS TERMINATED BY ','
+ MAP KEYS TERMINATED BY ':'
+LOCATION '/antonioc/empresa/tabla_bucketing';
+
+/*Engines: Tez, Spark y MapReduce*/
+set map.reduce.tasks = 2; /*Prodiedades de Hive*/
+set hive.enforce.bucketing = true;/*Habilitamos el bucketing*/
+INSERT OVERWRITE TABLE antonioc.cliente_buckets SELECT * FROM antonioc.tienda;
+
+###########################################################
+Crear Tabla con partición dinámica
+###########################################################
+
+set hive.exec.dynamic.partition.mode=nonstrict;
+
+insert into table antonioc.tabla_particion_dinamica partition (Fecha)
+SELECT
+  case
+    when Monto < 50 then 'Standard'
+    when Monto between 51 and 100 then 'Medium'
+    else 'Top'
+  end as TipoCliente,
+  case
+    when TipoTransaccion = 'BOL' then 'Boleta'    
+    else 'Factura'
+  end as TipoTransaccion,
+  cast(Monto as decimal(19, 2)) as Monto,
+  from_unixtime (unix_timestamp(Concat(substring(fecha,1,4),SUBSTRING(Fecha,5,2), SUBSTRING(Fecha,7,2)), 'yyyyMMdd'), 'yyyy-MM-dd') as Fecha
+FROM antonioc.transaccion;
+
+###########################################################
+User Define Functions UDFs
+###########################################################
+
+SELECT
+  from_unixtime(unix_timestamp(CONCAT(SUBSTRING(Fecha, 7, 4), SUBSTRING(Fecha, 4, 2), SUBSTRING(Fecha, 1, 2)), 'yyyyMMdd'), 'yyyy-MM-dd') AS FecRegistro,
+  UPPER(profundida) AS profundida,
+  CASE
+    WHEN profundida < 10 THEN 'BAJA'
+    WHEN profundida BETWEEN 10 AND 50 THEN 'MEDIA'
+    ELSE 'ALTA'
+  END AS medidaprod,
+  geom,
+  magnitud__
+FROM sesion_dos.tabla_externa;
+
+SELECT
+  from_unixtime(unix_timestamp(CONCAT(SUBSTRING(Fecha, 7, 4), SUBSTRING(Fecha, 4, 2), SUBSTRING(Fecha, 1, 2)), 'yyyyMMdd'), 'yyyy-MM-dd') AS FecRegistro,
+  COUNT(distinct geom)
+FROM sesion_dos.tabla_externa
+GROUP BY from_unixtime(unix_timestamp(CONCAT(SUBSTRING(Fecha, 7, 4), SUBSTRING(Fecha, 4, 2), SUBSTRING(Fecha, 1, 2)), 'yyyyMMdd'), 'yyyy-MM-dd');
+
+
+
+
+

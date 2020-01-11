@@ -1,0 +1,18 @@
+use antonioc;
+CREATE EXTERNAL TABLE IF NOT EXISTS antonioc.transaccion(
+idcliente string,
+Monto float,
+FormatoTransaccion string,
+TipoTransaccion string,
+IdTienda string,
+Fecha date,
+IdProducto string,
+Unidades integer 
+)
+COMMENT 'Tabla transacciones'
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY ','
+LINES TERMINATED BY '\n'
+STORED AS TEXTFILE
+LOCATION '/antonioc/empresa/transaccion'
+tblproperties("skip.header.line.count" = "1");
