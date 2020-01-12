@@ -1,0 +1,74 @@
+hdfs dfs -mkdir /ctic
+hdfs dfs -mkdir -p /ctic/landing
+hdfs dfs -mkdir -p /ctic/work
+
+hdfs dfs -put /home/carlocastrogalindo/data/tienda.txt /ctic/landing/
+hdfs dfs -put /home/carlocastrogalindo/data/clienteslite.csv /ctic/landing/
+hdfs dfs -put /home/carlocastrogalindo/data/transaccion.txt /ctic/landing/
+
+--Ingresar
+spark-shell
+
+--lectura txt spark
+spark.read.format("csv").option("delimiter","|").option("header","true").load("/ctic/landing/tienda.txt").show()  //// .show(200)
+
+-- listar bases de datos
+spark.sql("show databases").show()
+
+--Ver esquema
+spark.read.format("csv").option("delimiter","|").option("header","true").load("/ctic/landing/tienda.txt").printSchema()
+
+--importar
+import org.apache.spark.sql.types._
+
+val tienda_schema=StructType(
+List(
+StructField("idtienda", IntegerType, true),
+   StructField("sucursal", StringType, true),
+StructField("distritito", StringType, true),
+StructField("tipo", StringType, true),
+StructField("distritotipo", StringType, true)
+ )
+)
+
+--Ver esquema
+spark.read.format("csv").option("delimiter","|").option("header","true").schema(tienda_schema).load("/ctic/landing/tienda.txt").printSchema()
+
+--variables val no se puede modificar
+--variables var sí se puede modificar
+
+--Guardarlo en un dataframe
+val df_tienda = spark.read.format("csv").option("delimiter","|").option("header","true").load("/ctic/landing/tienda.txt")
+df_tienda.show()
+df_tienda.printSchema()
+
+--Guardarlo como parquet
+df_tienda.write.format("parquet").option("path","/ctic/work/tienda").saveAsTable("carloc.tienda")
+
+-- Consultar tabla
+spark.table("carloc.tienda").show()
+spark.table("carloc.tienda").filter("tipo='Super'").show()
+
+import org.apache.spark.sql.functions._
+spark.table("carloc.tienda").groupBy("tipo").agg(count("idtienda").alias("cantidad")).show()
+
+--Contar registros
+print(spark.table("carloc.tienda").count())
+
+val cant = spark.table("carloc.tienda").count()
+print(cant)
+
+--Tablas temporales
+val df_table = spark.table("carloc.tienda")
+df_table.createOrReplaceTempView("tiendaTmp")
+
+spark.sql("select * from tiendaTmp").show()
+
+--group by with count
+spark.sql("select tipo, count(idtienda) from tiendaTmp group by tipo").show()
+
+#############################################
+--también
+pyspark
+
+spark.read.format("csv").option("delimiter","|").option("header",True).load("/ctic/landing/tienda.txt").show()
