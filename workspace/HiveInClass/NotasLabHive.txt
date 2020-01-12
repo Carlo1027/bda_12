@@ -1,11 +1,11 @@
-#Lab Hive
+﻿#Lab Hive
 1. Ingresar a la consola
 1.1 Comando hive
     * escribir hive en alguno de los nodos del cluster
     * Salir CTRL+D
 1.2 Usando Beeline
     * ip local del Master
-    * beeline -u jdbc:hive2://10.128.0.5:10000/ /*IP DEL MASTER*/
+    * beeline -u jdbc:hive2://10.138.0.2:10000/ /*IP PRIVADA DEL MASTER*/
 2. Listar las BD en Hive (previamente tienes que estar conectado por Beeline)
    show databases;
 3. Crear una base de datos
@@ -96,7 +96,7 @@ tblproperties("skip.header.line.count" = "1");
 3. Para validar la creacion correcta ejecutamos las siguientes queries
 
 select distritotipo.distrito, distritotipo.tipo from carloc.tienda;
-select distritotipo from antonioc.tienda;
+select distritotipo from carloc.tienda;
 
 ###########################################################
 Crear Tabla con partición estática
@@ -135,8 +135,8 @@ Crear Tabla con bucketing
 ###########################################################
 Ideal para tablas que tengan una columna con una cantidad casi estática de elementos distintos y relativamente bien balanceados. Por ejemplo las regiones de Perú y las tiendas que se tiene en cada una.
 
-use antonioc;
-CREATE EXTERNAL TABLE IF NOT EXISTS antonioc.cliente_buckets (
+use carloc;
+CREATE EXTERNAL TABLE IF NOT EXISTS carloc.cliente_buckets (
  IdTienda string,
  Sucursal string,
  Distrito string,
@@ -148,12 +148,12 @@ CREATE EXTERNAL TABLE IF NOT EXISTS antonioc.cliente_buckets (
  FIELDS TERMINATED BY '|'
  COLLECTION ITEMS TERMINATED BY ','
  MAP KEYS TERMINATED BY ':'
-LOCATION '/antonioc/empresa/tabla_bucketing';
+LOCATION '/carloc/empresa/tabla_bucketing';
 
 /*Engines: Tez, Spark y MapReduce*/
 set map.reduce.tasks = 2; /*Prodiedades de Hive*/
 set hive.enforce.bucketing = true;/*Habilitamos el bucketing*/
-INSERT OVERWRITE TABLE antonioc.cliente_buckets SELECT * FROM antonioc.tienda;
+INSERT OVERWRITE TABLE carloc.cliente_buckets SELECT * FROM carloc.tienda;
 
 ###########################################################
 Crear Tabla con partición dinámica
@@ -161,7 +161,19 @@ Crear Tabla con partición dinámica
 
 set hive.exec.dynamic.partition.mode=nonstrict;
 
-insert into table antonioc.tabla_particion_dinamica partition (Fecha)
+1. Creamos la tabla
+CREATE EXTERNAL TABLE carloc.tabla_particion_dinamica 
+(
+    TipoCliente String,
+    TipoTransaccion String,
+    Monto String,
+    Fecha String
+)
+PARTITIONED BY (mensual STRING)
+STORED AS PARQUET
+LOCATION '/carlocastro/empresa/tabla_particion_dinamica';
+
+insert into table carloc.tabla_particion_dinamica partition (Fecha')
 SELECT
   case
     when Monto < 50 then 'Standard'
@@ -174,7 +186,7 @@ SELECT
   end as TipoTransaccion,
   cast(Monto as decimal(19, 2)) as Monto,
   from_unixtime (unix_timestamp(Concat(substring(fecha,1,4),SUBSTRING(Fecha,5,2), SUBSTRING(Fecha,7,2)), 'yyyyMMdd'), 'yyyy-MM-dd') as Fecha
-FROM antonioc.transaccion;
+FROM carloc.transaccion;
 
 ###########################################################
 User Define Functions UDFs

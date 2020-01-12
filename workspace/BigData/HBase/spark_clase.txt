@@ -1,0 +1,101 @@
+hdfs dfs -ls /
+hdfs dfs -mkdir /ctic
+hdfs dfs -mkdir /ctic/landing
+hdfs dfs -mkdir /ctic/work
+
+
+hdfs dfs -put /home/aquiroz/data/tienda.txt /ctic/landing/
+hdfs dfs -put /home/aquiroz/data/clienteslite.csv /ctic/landing/
+hdfs dfs -put /home/aquiroz/data/transaccion.txt /ctic/landing/
+
+
+spark.read.format("csv") .
+option("delimiter","|") .
+option("header","true") .
+load("/ctic/landing/tienda.txt") .
+show()
+
+//hive 
+
+create database virtualcoach;
+
+spark.read.format("csv") .
+option("delimiter","|") .
+option("header","true") .
+load("/ctic/landing/tienda.txt") .
+printSchema()
+
+
+//importar
+import org.apache.spark.sql.types._
+val tienda_schema=StructType(
+List(
+StructField("idtienda", IntegerType, true),
+   StructField("sucursal", StringType, true),
+StructField("distritito", StringType, true),
+StructField("tipo", StringType, true),
+StructField("distritotipo", StringType, true)
+ )
+)
+
+//imprimir el schema con la nueva estructura de datos
+spark.read.format("csv") .
+option("delimiter","|") .
+option("header","true") .
+schema(tienda_schema).
+load("/ctic/landing/tienda.txt") .
+printSchema()
+
+//asignar la data a una variable de tipo dataframe
+val df_tienda=spark.read.format("csv") .
+option("delimiter","|") .
+option("header","true") .
+schema(tienda_schema).
+load("/ctic/landing/tienda.txt")
+
+df_tienda.show()
+df_tienda.printSchema()
+
+//guardamos la data como tabla si es que no existe
+//, indicamos la ruta de hdfs donde se almacenara la data
+df_tienda.write.
+format("parquet").
+option("path","/ctic/work/tienda").
+saveAsTable("virtualcoach.tienda")
+
+spark.table("virtualcoach.tienda").show()
+
+spark.table("virtualcoach.tienda").
+filter("tipo='Super'").
+show()
+
+import org.apache.spark.sql.functions._
+
+spark.table("virtualcoach.tienda").
+groupBy("tipo").agg(count("idtienda").alias("cantidad")).
+show()
+
+//cantidad de registros
+print(spark.table("virtualcoach.tienda").count())
+
+val cant=spark.table("virtualcoach.tienda").count()
+print(cant)
+
+//temporales
+val df_table=spark.table("virtualcoach.tienda")
+df_table.createOrReplaceTempView("tiendaTmp")
+
+spark.sql("select * from tiendaTmp").show()
+
+//group by with count
+
+spark.sql("select tipo,count(idtienda) from tiendaTmp group by tipo").show()
+
+
+
+
+val df = spark.read.format("csv") .
+option("delimiter","|") .
+option("header","true") .
+load("/ctic/landing/tienda.txt") 
+df.write.format("parquet").option("path","/ctic/work/tienda/").saveAsTable("virtualcoach.test")
