@@ -1,0 +1,76 @@
+//reconocer los tipos de datos para el esquema de mis
+import org.apache.spark.sql.types._
+
+
+
+val devol_schema = StructType(
+List(
+StructField("devuelto", StringType, true),
+   StructField("idpedido", StringType, true),
+StructField("region", StringType, true)
+ )
+)
+
+//revisar data
+
+val df_devol=spark.read.format("csv").option("delimiter",",").option("header",true).load("/datalake/rda/data/Devoluciones.csv")
+
+df_devol.show()
+df_printSchema() //muestra la estructura del dataframe	
+
+
+val df_devol =spark.read.format("csv").option("header",true).option("delimiter",",").schema(devol_schema).load("/datalake/rda/data/Devoluciones.csv")
+
+df_devol.write.format("parquet").save("/datalake/uda/devoluciones/")
+
+
+spark.read.format("parquet").load("/datalake/uda/devoluciones").show(false)
+
+
+
+
+val ped_schema=StructType(
+List(
+StructField("idfila", IntegerType, true),
+StructField("idpedido", StringType, true),
+StructField("nomcliente", StringType, true),
+StructField("ventas", StringType, true),
+StructField("cantidad", IntegerType, true),
+StructField("descuento", StringType, true),
+StructField("beneficio", StringType, true),
+StructField("costoenvio", StringType, true),
+StructField("prioridad", StringType, true)
+)
+)
+
+val df_ped =spark.read.format("csv").option("header",true).option("delimiter",";").schema(ped_schema).load("/datalake/rda/data/Pedidos.csv")
+
+df_ped.write.format("parquet").save("/datalake/uda/pedidos")
+
+
+df_ped.printSchema()
+
+
+
+val personas_schema = StructType(
+ List(
+   StructField("persona", StringType, true),
+   StructField("region", StringType, true))
+)
+
+val df_personas =spark.read.format("csv").option("header",true).option("delimiter",",").schema(personas_schema).load("/datalake/rda/data/Personas.csv")
+
+df_personas.write.format("parquet").save("/datalake/uda/personas")
+
+
+//columnas diferentes por las cuales realizare el join 
+var df_tablon=df_devol.as("a").join(df_ped.as("b"),"idpedido").join(df_personas.as("c"),"region").select("a.idpedido","b.ventas","b.cantidad","b.descuento","c.persona")
+
+df_tablon.write.format("parquet").save("/datalake/dda/virtualcoach")
+
+
+
+
+
+
+

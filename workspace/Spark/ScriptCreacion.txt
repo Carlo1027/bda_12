@@ -1,0 +1,111 @@
+CREATE DATABASE sesion_dos;
+
+CREATE TABLE IF NOT EXISTS sesion_dos.sisigp_default
+( 
+    FID String,
+    geom String,
+    longitud String,
+    latitud String,
+    profundida String,
+    magnitud__ String,
+    fecha String,
+    hora_utc String,
+    clasif String
+    
+)
+COMMENT 'sisigp_default details'
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY ','
+LINES TERMINATED BY '\n'
+STORED AS TEXTFILE;
+
+
+
+
+
+
+
+
+create database llamagas_rda;
+
+create table llamagas_rda.devoluciones
+(
+devuelto string,
+idpedido string,
+region string
+)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY ','
+LINES TERMINATED BY '\n'
+LOCATION '/datalake/rda/data/devoluciones.csv'
+TBLPROPERTIES ("skip.header.line.count"="1");
+
+
+create table llamagas_rda.devoluciones
+(
+devuelto string,
+idpedido string,
+region string
+)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY ','
+LINES TERMINATED BY '\n'
+STORED AS TEXTFILE
+LOCATION '/datalake/rda/data/devoluciones.csv';
+
+
+
+val df_devol=spark.read.format("csv").option("header",true).option("delimiter",",").option("inferSchema",true).load("/datalake/rda/data/Devoluciones.csv")
+//re escribir la data
+df_devol.write.mode("overwrite").saveAsTable("llamagas_rda.devoluciones")
+
+df_devol.write.mode("append").saveAsTable("llamagas_rda.devoluciones")
+
+
+
+
+//leer la data
+val df_devol=spark.read.format("csv").option("header",true).option("delimiter",",").option("inferSchema",true).load("/datalake/rda/data/Devoluciones.csv")
+
+//reescribir la data o chancar
+df_devol.write.mode("overwrite").saveAsTable("llamagas_rda.devoluciones")
+
+//agregar data
+df_devol.write.mode("append").saveAsTable("llamagas_rda.devoluciones")
+
+
+//crear base de datos
+
+create database llamagas_uda;
+
+create table llamagas_uda.personas
+(
+persona string,
+region string
+)
+stored as parquet
+location '/datalake/uda/personas/'
+
+create database llamagas_dda;
+
+create table llamagas_dda.virtualcoch
+(
+idpedido string,
+ventas double,
+cantidad int,
+descuento double,
+persona string
+)
+stored as parquet
+location '/datalake/dda/virtualcoach/';
+
+
+//leer la data
+val df_pedi=spark.read.format("csv").option("header",true).option("delimiter",";").option("inferSchema",true).load("/datalake/rda/data/Pedidos.csv")
+
+
+
+
+
+
+
